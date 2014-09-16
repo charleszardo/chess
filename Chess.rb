@@ -26,21 +26,25 @@ class Board
   end
 
   def has_piece?(pos)
-    self[pos].is_a?(Piece)
+    self[pos].kind_of?(Piece)
   end
 
-  def legal_move?(pos)
-    self.on_board?(pos) && !self.has_piece?(pos)
+  def legal_move?(pos, color)
+    self.on_board?(pos) || kill_move?(pos, color)
+  end
+
+  def kill_move?(pos, color)
+    self.has_piece?(pos) && (self[pos].color != color)
   end
 
   def render
-
     @grid.each do |row|
       row.each do |cell|
         print "| |" unless cell.is_a?(Piece)
       end
       print "\n"
     end
+
   end
 
 end
@@ -53,12 +57,6 @@ class Piece
   attr_accessor :pos
 
   attr_reader :color, :board
-
-  MOVES = {diagonal: [],
-            vertical: [],
-            horizontal: [],
-            lshape: []
-            }
 
   def initialize(board, pos, color)
     @board = board
@@ -74,7 +72,15 @@ class Piece
     d = Array.new(8) {Array.new(8)}
     8.times do |i|
       8.times do |j|
-        moves.include?([i,j]) ? print("|X|") : print("| |")
+        if [i,j] == self.pos
+          print("|S|")
+        elsif self.board[[i,j]].kind_of?(Piece)
+          print("|K|")
+        elsif moves.include?([i,j])
+          print("|X|")
+        else
+          print("| |")
+        end
       end
       print "\n"
     end
@@ -96,7 +102,7 @@ class SlidingPiece < Piece
 
     while true
       new_pos = [x + dx, y + dy]
-      if self.board.legal_move?(new_pos)
+      if self.board.legal_move?(new_pos, self.color)
         end_positions << new_pos
       else
         break
@@ -125,7 +131,7 @@ class SteppingPiece < Piece
     p MOVES
     self.class::MOVES.each do |dx, dy|
       x, y = x + dx, y + dy
-      moves << [x, y] if self.board.legal_move?([x, y])
+      moves << [x, y] if self.board.legal_move?([x, y],self.color)
       x, y = self.pos
     end
     self.test_move(moves)
@@ -160,12 +166,56 @@ class King < SteppingPiece
     ]
 end
 
+class Pawn < Piece
+  attr_reader :charge, :kill_moves
+
+  def initialize(board, pos, color)
+    super(board, pos, color)
+    pawn_moves
+  end
+
+  def pawn_moves
+    if self.color == :white
+      @charge = [-1, 0]
+      @kill_moves = [[-1, -1], [-1, 1]]
+    else
+      @charge = [ 1, 0]
+      @kill_moves = [[ 1, -1], [ 1, 1]]
+    end
+  end
+
+  def moves
+    x, y = self.pos
+
+    dx, dy = self.charge
+    new_pos = [x + dx, y + dy]
+    if self.board.legal_move?(new_pos, self.color)
+      unless self.board.has_piece?(new_pos)
+        moves = [new_pos]
+      end
+    end
+
+    moves ||= []
+
+    self.kill_moves.each do |dx, dy|
+      x, y = x + dx, y + dy
+      moves << [x, y] if self.board.kill_move?([x, y], self.color)
+      x, y = self.pos
+    end
+    p moves
+    self.test_move(moves)
+  end
+end
+
 class HumanPlayer
 end
 
 if __FILE__ == $PROGRAM_NAME
   board = Board.new
-  piece = King.new(board, [3,3], "white")
+  piece = Pawn.new(board, [3,3], :white)
+  piece2 = King.new(board,[2,3], :white)
+  piece3 = Knight.new(board,[2,2], :white)
+  board[[2,2]] = piece3
+  board[[2,3]] = piece2
   piece.moves
-  board.render
 end

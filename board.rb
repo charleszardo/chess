@@ -1,3 +1,4 @@
+# encoding: utf-8
 class Board
   SIZE = 8
 
@@ -10,14 +11,12 @@ class Board
     Array.new(SIZE) { Array.new(SIZE) }
   end
 
-
-  def initialize
+  def initialize(blank=false)
     @grid = self.class.make_grid
-    make_pieces
+    make_pieces unless blank
     # make_pieces
     # Pic Player Start or something like that
   end
-
 
   def make_pieces
     royalties = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
@@ -30,16 +29,17 @@ class Board
     end
   end
 
-
   def deep_dup
-    dupped_board = self.class.make_grid
-    self.each_with_index do |row, i|
+    puts "Got dupped"
+    dupped_board = Board.new(true)
+    self.grid.each_with_index do |row, i|
       row.each_with_index do |cell, j|
         if cell.kind_of?(Piece)
-          dupped_board[i,j] = cell.class.new(dupped_board, [i,j], cell.color)
+          dupped_board[[i,j]] = cell.class.new(dupped_board, [i,j], cell.color)
         end
       end
     end
+    dupped_board
   end
 
   def []=(pos, piece)
@@ -91,11 +91,16 @@ class Board
   def render
     @grid.each do |row|
       row.each do |cell|
-        cell.kind_of?(Piece) ? print("|#{cell.crest}|") : print("| |")
+        cell.kind_of?(Piece) ? print("|#{cell.gen_symbol.encode}|") : print("| |")
       end
       print "\n"
     end
   end
+  def move_piece!(from_pos, to_pos)
+    self[from_pos].pos = to_pos
+    self[from_pos], self[to_pos] = self[to_pos], self[from_pos]
+  end
+
 
   def move_piece(from_pos, to_pos)
 
@@ -103,6 +108,7 @@ class Board
     # begin
     #   raise ArgumentError.new "There is no piece there" unless self[from_pos].kind_of?(Piece)
     #   raise ArgumentError.new "Not a valid move" unless self[from_pos].moves.include?(to_pos)
+    #   raise ArgumentError.new "It Would Leave you in check" unless self[from_pos].valid_moves.include?(to_pos)
     # rescue ArgumentError => e
     #   puts e.to_s
     #   retry

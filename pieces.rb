@@ -1,3 +1,4 @@
+# encoding: utf-8
 class Piece
   attr_accessor :pos
 
@@ -10,8 +11,38 @@ class Piece
     board[pos] = self
   end
 
+  def gen_symbol
+    id = [self.color, self.class]
+    symb_hash = {
+      [:white, King] => "\u2654",
+      [:white, Queen] => "\u2655",
+      [:white, Rook] => "\u2656",
+      [:white, Knight] => "\u2658",
+      [:white, Bishop] => "\u2657",
+      [:white, Pawn] => "\u2659",
+      [:black, King] => "\u265A",
+      [:black, Queen] => "\u265B",
+      [:black, Rook] => "\u265C",
+      [:black, Knight] => "\u265E",
+      [:black, Bishop] => "\u265D",
+      [:black, Pawn] => "\u265F"
+    }
+    symb_hash[id]
+  end
+
+  def dup
+    Piece.new()
+  end
+
   def moves
     # to be implemented in subclasses
+  end
+
+  def valid_moves
+    self.moves.reject do |move|
+      test_board = self.board.deep_dup
+      test_board.move_piece!(self.pos, move).in_check?(self.color)
+    end
   end
 
   def test_move(moves)

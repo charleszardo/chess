@@ -79,7 +79,9 @@ class Board
   end
 
   def checkmate?(color)
-    self.in_check?(color) && self.army(color).all?{|unit| unit.valid_moves.empty?}
+    test = self.in_check?(color) && self.army(color).all?{|unit| unit.valid_moves.empty?}
+    puts "CHECKMATE!" if test
+    test
   end
 
   def king_pos(color)
@@ -109,7 +111,7 @@ class Board
       row.each_with_index do |cell, col_idx|
         tile = cell.kind_of?(Piece) ? "|#{cell.gen_symbol.encode}|" : "| |"
         if [row_idx, col_idx] == self.cursor.position
-          print tile.on_green
+          print tile.on_green.blink
         elsif move_grid.include?([row_idx, col_idx])
           print tile.on_yellow
         elsif color_counter % 2 == 0

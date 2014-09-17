@@ -11,6 +11,8 @@ class Piece
     board[pos] = self
   end
 
+  #move symbols to each class
+  #method should return appropriate color
   def gen_symbol
     id = [self.color, self.class]
     symb_hash = {
@@ -30,8 +32,8 @@ class Piece
     symb_hash[id]
   end
 
+  #finish implmting
   def dup
-    Piece.new()
   end
 
   def moves
@@ -40,7 +42,7 @@ class Piece
 
   def valid_moves
     self.moves.reject do |move|
-      test_board = self.board.deep_dup
+      test_board = self.board.dup
       test_board.move_piece!(self.pos, move).in_check?(self.color)
     end
   end
@@ -67,21 +69,20 @@ end
 
 class SlidingPiece < Piece
   DIAGONALS = [[-1, -1],[-1, 1],[1, -1],[1, 1]]
-  STRAIGHTS = [[0, -1],[-1, 0],[1, 0],[0, 1]]
-  # def initialize()
-  #
-  # end
+  ORTHOGONALS = [[0, -1],[-1, 0],[1, 0],[0, 1]]
 
   def move_dir(dir)
     end_positions = []
     x, y = self.pos
     dx, dy = dir
-
-    while true
+    not_killed = true
+    while not_killed
       new_pos = [x + dx, y + dy]
       if self.board.legal_move?(new_pos, self.color)
+        (not_killed = false) if self.board.kill_move?(new_pos, self.color)
         end_positions << new_pos
       else
+        not_killed = false
         break
       end
       x, y = new_pos
@@ -89,10 +90,14 @@ class SlidingPiece < Piece
     end_positions
   end
 
+  def setup_deltas
+    @deltas = DIAGONALS + ORTHOGONALS
+  end
+
+
   def moves
-    moves = []
-    moves += self.class::DIAGONALS.map{ |pos| move_dir(pos) }.flatten(1)
-    moves += self.class::STRAIGHTS.map{ |pos| move_dir(pos) }.flatten(1)
+    self.setup_deltas
+    @deltas.map{ |pos| move_dir(pos) }.flatten(1)
   end
 
 
@@ -110,28 +115,23 @@ class SteppingPiece < Piece
       x, y = self.pos
     end
     moves
-    #self.test_move(moves)
   end
 
 end
 
 class Queen < SlidingPiece
-  def crest
-    "Q"
-  end
+
 end
 
 class Bishop < SlidingPiece
-  STRAIGHTS = []
-  def crest
-    "B"
+  def setup_deltas
+    @deltas = DIAGONALS
   end
 end
 
 class Rook < SlidingPiece
-  DIAGONALS = []
-  def crest
-    "R"
+  def setup_deltas
+    @deltas = ORTHOGONALS
   end
 end
 
@@ -141,9 +141,6 @@ class Knight < SteppingPiece
     [-2, -1], [-2, 1],
     [-1, 2], [1, 2],
     [-1, -2], [1, -2]]
-    def crest
-      "H"
-    end
 end
 
 class King < SteppingPiece
@@ -151,9 +148,6 @@ class King < SteppingPiece
     [-1, -1],[-1, 1],[1, -1],[1, 1],
     [0, -1],[-1, 0],[1, 0],[0, 1]
     ]
-    def crest
-      "K"
-    end
 end
 
 class Pawn < Piece
@@ -161,10 +155,10 @@ class Pawn < Piece
 
   def initialize(board, pos, color)
     super(board, pos, color)
-    pawn_moves
+    setup_pawn_moves
   end
 
-  def pawn_moves
+  def setup_pawn_moves
     if self.color == :white
       @charge = [-1, 0]
       @kill_moves = [[-1, -1], [-1, 1]]
@@ -193,9 +187,5 @@ class Pawn < Piece
       x, y = self.pos
     end
     moves
-    #self.test_move(moves)
-  end
-  def crest
-    "P"
   end
 end

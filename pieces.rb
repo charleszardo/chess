@@ -1,4 +1,3 @@
-# encoding: utf-8
 class Piece
   attr_accessor :pos
 
@@ -11,8 +10,6 @@ class Piece
     board[pos] = self
   end
 
-  #move symbols to each class
-  #method should return appropriate color
   def gen_symbol
     id = [self.color, self.class]
     symb_hash = {
@@ -32,8 +29,8 @@ class Piece
     symb_hash[id]
   end
 
-  #finish implmting
-  def dup
+  def dup(board)
+    test = self.class.new(board, self.pos, self.color)
   end
 
   def moves
@@ -44,24 +41,6 @@ class Piece
     self.moves.reject do |move|
       test_board = self.board.dup
       test_board.move_piece!(self.pos, move).in_check?(self.color)
-    end
-  end
-
-  def test_move(moves)
-    d = Array.new(8) {Array.new(8)}
-    8.times do |i|
-      8.times do |j|
-        if [i,j] == self.pos
-          print("|S|")
-        elsif self.board[[i,j]].kind_of?(Piece)
-          print("|K|")
-        elsif moves.include?([i,j])
-          print("|X|")
-        else
-          print("| |")
-        end
-      end
-      print "\n"
     end
   end
 
@@ -94,13 +73,10 @@ class SlidingPiece < Piece
     @deltas = DIAGONALS + ORTHOGONALS
   end
 
-
   def moves
     self.setup_deltas
     @deltas.map{ |pos| move_dir(pos) }.flatten(1)
   end
-
-
 end
 
 class SteppingPiece < Piece
@@ -170,9 +146,12 @@ class Pawn < Piece
 
   def moves
     x, y = self.pos
-
+    # p [x,y]
     dx, dy = self.charge
+    # p [dx, dy]
+    # p self.color
     new_pos = [x + dx, y + dy]
+
     if self.board.legal_move?(new_pos, self.color)
       unless self.board.has_piece?(new_pos)
         moves = [new_pos]
@@ -180,6 +159,20 @@ class Pawn < Piece
     end
 
     moves ||= []
+
+    if self.pos.first == 1 && self.color == :black
+      double_move = [x + 2, y ]
+    elsif self.pos.first == 6 && self.color == :white
+      double_move = [x - 2, y ]
+    else
+      double_move = nil
+    end
+
+    if double_move && self.board.legal_move?(double_move, self.color)
+      unless self.board.has_piece?(double_move)
+        moves << double_move
+      end
+    end
 
     self.kill_moves.each do |dx, dy|
       x, y = x + dx, y + dy

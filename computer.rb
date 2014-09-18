@@ -33,8 +33,10 @@ class ComputerPlayer
   def future_tree(board, future_level, color = self.color)    #
     # Generate An Array Of All Possible Moves
     return self.evaluate(board) if future_level < 0
-
+    #Return If We've Found A Checkmate
     valid_steps = self.valid_steps(board, color)
+    return self.evaluate(board) if valid_steps.empty?
+
     crystal_ball = valid_steps.map{|step| [step]}
     #this is to make sure we only go deeper when it's after opponents turn
     future_level -= 1 unless self.color == color
@@ -51,15 +53,31 @@ class ComputerPlayer
     crystal_ball
   end
 
-  def pick_move(future_tree)
-    future_tree = future_tree.map do |branch|
-      min_enemy_moves = self.min_of_last_nodes(branch.last)
-      branch = branch.take(2) << min_enemy_moves
+  def process_tree(future_tree)
+    p future_tree
+    #While we are not as the last level
+    unless !future_tree.first.last.last.last.is_a?(Array)
+      # Recurse and update till we only have a 1 level deep tree
+      future_tree.each do |our_turn|
+        our_turn.last.each do |their_turn|
+          their_turn[-1] = self.process_tree(their_turn.last)
+        end
+      end
+    else
+      #if last level we dont have to find the max, can return array
+      future_tree = future_tree.map do |branch|
+        #Return Early If We Find CheckMate
+        if branch.last.is_a?(Array)
+          min_enemy_moves = self.min_of_last_nodes(branch.last)
+        else
+          min_enemy_moves = branch.last
+        end
+        branch = branch.take(2) << min_enemy_moves
+      end
+      max = self.max_of_nodes(future_tree)
+      random_best = future_tree.select{|branch| branch.last == max}.sample
+      p random_best
     end
-    max = self.max_of_nodes(future_tree)
-
-    random_best = future_tree.select{|branch| branch.last == max}.sample
-    p random_best
 
   end
 
@@ -67,10 +85,18 @@ class ComputerPlayer
     nodes.map{|node| node.last}.max
   end
 
-
   def min_max(board)
     future_tree = self.future_tree(board, 0)
     self.pick_move(future_tree)
+  end
+
+  def min_of_last_nodes(nodes)
+    #gets nodes, turn nodes into board values
+    values = nodes.map do |node|
+      node.last
+    end
+    # Returns Board Value Of Enemy Best Move
+    values.min
   end
 
 
@@ -83,16 +109,6 @@ class ComputerPlayer
   #   values.max
   #
   # end
-
-  def min_of_last_nodes(nodes)
-    #gets nodes, turn nodes into board values
-    values = nodes.map do |node|
-      node.last
-    end
-    # Returns Board Value Of Enemy Best Move
-    values.min
-  end
-
 
     #assuming we are at bottom
     # max = future_tree.map{|node| node[2]}.max
@@ -117,9 +133,6 @@ class ComputerPlayer
     #   node.last = future_tree
 
     # We Want To Maximize The Minimum Opponent Player Score
-
-
-    # Our Step
 
 
   def valid_steps(board, player)
@@ -168,17 +181,17 @@ if __FILE__ == $PROGRAM_NAME
   Knight.new(board, [0,1], :black)
   Rook.new(board, [2,2], :white)  #
   # Knight.new(board, [2,1], :black)
-  player = ComputerPlayer.new(:white)
-  board.render(:white)
+  player = ComputerPlayer.new(:black)
+  board.render(:black)
   start_time = Time.new  #
-  future_sight = player.future_tree(board, 0) #
+  future_sight = player.future_tree(board, 1) #
   #puts future_sight.first.first #this is the move from, to combo  #
   # puts future_sight.first[1] # This is the first level state, and only  only the  state
   # p future_sight.first.last.first #this is the second level item, two moves forward
   end_time = Time.new
   print "took #{end_time - start_time} seconds to generate future tree\n"
   # p future_sight.first.last
-  player.min_max(board)
+  player.process_tree(future_sight)
   # p future_sight.last[2]
   # Took 4.27 seconds with plain look ahead
 

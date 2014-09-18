@@ -79,9 +79,7 @@ class Board
   end
 
   def checkmate?(color)
-    test = self.in_check?(color) && self.army(color).all?{|unit| unit.valid_moves.empty?}
-    puts "CHECKMATE!" if test
-    test
+    self.in_check?(color) && self.army(color).all?{|unit| unit.valid_moves.empty?}
   end
 
   def king_pos(color)
@@ -92,7 +90,7 @@ class Board
     self.grid.flatten.select {|unit| !unit.nil? && unit.color == color}
   end
 
-  def render(color)
+  def render(color = :white)
     print "| |"
     ("a".."h").each{|letter| print "|#{letter}|"}
     print "\n"
@@ -159,7 +157,13 @@ class Board
   def user_move(from_string, to_string, color)
     from_pos = self.move_conversion(from_string)
     to_pos = self.move_conversion(to_string)
-    raise ChessError.new "Move your own piece, thief!" unless self[from_pos].color == color
+    
+    raise ChessError.new "Move your own piece, thief!" unless     self[from_pos].color == color
     self.move_piece(from_pos, to_pos)
+  end
+  
+  def inspect
+    self.render(:white)
+    "Just Another Nameless Board"
   end
 end

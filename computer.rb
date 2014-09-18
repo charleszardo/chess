@@ -12,6 +12,7 @@ require_relative "board"
 require_relative "pieces"
 require_relative "cursor"
 require 'colorize'
+require 'set'
 
 class ComputerPlayer
   OPP = {white: :black,
@@ -28,35 +29,59 @@ class ComputerPlayer
   def initialize(color)
     @color = color
   end
+  
+  def future_tree(board, future_level, color = self.color)    #
+    # Generate An Array Of All Possible Moves
+    return self.evaluate(board) if future_level == 0 && color != self.color
 
-  def step(board, player, turns)
-    return evaluate(board) if turns == 0
-    boards = []
+    valid_steps = self.valid_steps(board, color)
+    crystal_ball = valid_steps.map{|step| [step]}
+    #this is to make sure we only go deeper when it's after opponents turn
+    future_level -= 1 unless self.color == color
+    
+    crystal_ball.each do |time_shard|
+      step_state = self.moved_state(board, time_shard.first)
+      time_shard << step_state
+      next_color = OPP[color]
+      recurse = future_tree(step_state, future_level, next_color)
+      time_shard << recurse
+    end
+    
+    crystal_ball
+  end
+  
+  def min_max
+    # We Want To Maximize The Minimum Opponent Player Score
 
-      board.army(player.color).each do |unit|
-        unit.valid_moves.each do |move|
-          boards << boards.move(unit.from pos, move)
-        end
-      end
-
-    #go through every possible moves of players units
-    #dup board, gets N board. Each board has value of V
-    #if my color is their color, choose one which gives max board position
-    return max(boards.map{|board| step(board, player, turns - 1)}) if player.color = self.color
-    #else return min of all boards
-    return max(boards.map{|board| step(board, player, turns - 1)}) unless player.color = self.color
+    
+    # Our Step
+    
+    #Their Step
   end
 
-  def move
-    #3 ply look ahead
-
-    #ab prone
-
-    #calculate board value at every step
-
-    #randomly select if states are tied
-
-
+  
+  
+  def valid_steps(board, player)
+    #Return an array of all possible valid from  -> to combos 
+    units = board.army(player)
+    moves = units.map do |unit|
+       unit.valid_moves.map do |move|
+         [unit.pos, move]
+     end
+    end
+    moves = moves.flatten(1)
+  end
+  
+  def moved_state(board, step)
+    #Get a new board state
+      board.dup.move_piece!(step.first, step.last)
+  end
+  
+  def state_scores(board_states)
+    #Returns an array of board scores
+    scores = board_states.map do |state|
+      self.evaluate(state)
+    end
   end
 
   def evaluate(board)
@@ -76,12 +101,21 @@ class ComputerPlayer
 end
 
 if __FILE__ == $PROGRAM_NAME
-  board = Board.new
+  board = Board.new(true)
+  King.new(board, [0,2], :white)
+  King.new(board, [0,0], :black)
+  Rook.new(board, [2,2], :white)
   player = ComputerPlayer.new(:white)
   board.render(:white)
-  p player.evaluate(board)
-  board[[0,1]] = nil
-  p player.evaluate(board)
+  start_time = Time.new
+  future_sight = player.future_tree(board, 2)  #
+  #puts future_sight.first.first #this is the move from, to combo  #
+  # puts future_sight.first[1] # This is the first level state, and only  only the  state
+  # p future_sight.first.last.first #this is the second level item, two moves forward
+  end_time = Time.new
+  print "took #{end_time - start_time} seconds to generate future tree"
+  # Took 4.27 seconds with plain look ahead
+  
   
   
 end

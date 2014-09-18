@@ -53,15 +53,40 @@ class ComputerPlayer
     crystal_ball
   end
 
-  def process_tree(future_tree)
-    p future_tree
+  def process_tree
+    if tree, level == root level
+      return process min of process tree(nodes)
+      return position of max node of min nodes value
+    else
+      min_nodes = array.last(recursive call)
+      return value of max moves with min_nodes mapped
+    end
+  end
+
+
+
+
+
+
+
+
+
+
+
+  def process_tree(future_tree, level)
+    # Return if we've been mated
+    return future_tree if future_tree.is_a?(Fixnum)
     #While we are not as the last level
     unless !future_tree.first.last.last.last.is_a?(Array)
       # Recurse and update till we only have a 1 level deep tree
       future_tree.each do |our_turn|
+
+        #Their Their Min
         our_turn.last.each do |their_turn|
           their_turn[-1] = self.process_tree(their_turn.last)
         end
+
+
       end
     else
       #if last level we dont have to find the max, can return array
@@ -74,20 +99,25 @@ class ComputerPlayer
         end
         branch = branch.take(2) << min_enemy_moves
       end
-      max = self.max_of_nodes(future_tree)
-      random_best = future_tree.select{|branch| branch.last == max}.sample
-      p random_best
+      self.max_of_last_nodes(future_tree)
     end
-
   end
 
-  def max_of_nodes(nodes)
+
+
+
+  def select_move(board)
+    future_tree = self.future_tree(board, 0, color = self.color)
+    processed_tree = self.process_tree(future_tree)
+    p processed_tree
+    # max = self.max_of_last_nodes(processed_tree)
+    # random_best = processed_tree.select{|branch| branch.last == max}.sample
+    # p random_best
+  end
+
+  def max_of_last_nodes(nodes)
+    # p nodes
     nodes.map{|node| node.last}.max
-  end
-
-  def min_max(board)
-    future_tree = self.future_tree(board, 0)
-    self.pick_move(future_tree)
   end
 
   def min_of_last_nodes(nodes)
@@ -98,7 +128,6 @@ class ComputerPlayer
     # Returns Board Value Of Enemy Best Move
     values.min
   end
-
 
   # def max_of_nodes(nodes)
   #   # Soring Through The Black Player's Turns
@@ -184,14 +213,14 @@ if __FILE__ == $PROGRAM_NAME
   player = ComputerPlayer.new(:black)
   board.render(:black)
   start_time = Time.new  #
-  future_sight = player.future_tree(board, 1) #
+  future_sight = player.future_tree(board, 0) #
   #puts future_sight.first.first #this is the move from, to combo  #
   # puts future_sight.first[1] # This is the first level state, and only  only the  state
   # p future_sight.first.last.first #this is the second level item, two moves forward
   end_time = Time.new
   print "took #{end_time - start_time} seconds to generate future tree\n"
   # p future_sight.first.last
-  player.process_tree(future_sight)
+  player.select_move(board)
   # p future_sight.last[2]
   # Took 4.27 seconds with plain look ahead
 

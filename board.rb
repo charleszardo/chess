@@ -110,9 +110,9 @@ class Board
       i -= 1
       row.each_with_index do |cell, col_idx|
         tile = cell.kind_of?(Piece) ? "|#{cell.gen_symbol.encode}|" : "| |"
-        if [row_idx, col_idx] == self.cursor.position
-          print tile.on_green.blink
-        elsif move_grid.include?([row_idx, col_idx])
+        # if [row_idx, col_idx] == self.cursor.position
+        #   print tile.on_green
+        if move_grid.include?([row_idx, col_idx])
           print tile.on_yellow
         elsif color_counter % 2 == 0
           print tile.on_white

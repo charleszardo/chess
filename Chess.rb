@@ -16,6 +16,7 @@ class Game
   end
 
   def play
+    self.instructions
     @current_player = @players[@turns]
     @turns += 1
     while true
@@ -39,6 +40,16 @@ class Game
     self.game_over
   end
 
+  def instructions
+    system("clear")
+    print "Welcome to Chess. White (bottom) makes the first move.\n"
+    print "When prompted, enter a move as a set of two coordinates separated by a space.\n"
+    print "(i.e. b2 b3) \n"
+    print "Formatting is important!\n\n"
+    print "Press enter to begin!"
+    gets.chomp
+  end
+
   def game_over
     system("clear")
     text = "
@@ -54,6 +65,8 @@ class Game
     "
     print text.blink
     sleep (2)
+    p "made by John Zhang and Dave Charnuska, September 2014"
+    p "https://github.com/charleszardo/chess"
   end
 end
 

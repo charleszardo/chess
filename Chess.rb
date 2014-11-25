@@ -42,8 +42,8 @@ class Game
 
   def instructions
     system("clear")
-    print "Welcome to Chess. White (bottom) makes the first move.\n"
-    print "When prompted, enter a move as a set of two coordinates separated by a space.\n"
+    print "Welcome to Chess.\nWhite (bottom) makes the first move.\n"
+    print "When prompted, enter a move as a set\nof two coordinates separated by a space.\n"
     print "(i.e. b2 b3) \n"
     print "Formatting is important!\n\n"
     print "Press enter to begin!"
